@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import pandas as pd
 
+# Testing something out
+
 background_color = "linear-gradient(180deg, #6E48AA, #B538FF)"
 
 st.markdown("<h1 style='text-align: center; color: black;'>Cinema Lit</h1>", unsafe_allow_html=True)
