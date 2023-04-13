@@ -53,4 +53,3 @@ elif option == "Movie Search":
     url = f"https://api.themoviedb.org/3/search/movie?api_key={api_key}"
     move_name = st.text_input("Enter the name of the movie you want to search?")
     response = requests.get(url)
-
