@@ -10,11 +10,13 @@ api_key = "bdb0d72516db605476b9d810383f277e"
 
 option = st.sidebar.selectbox("Here are the other options: ", ("Main Page", "Movie Search", "Movie Statistics"))
 
+# Home Page
 if option == "Main Page":
     st.title("Home Page")
 
+# Search
 elif option == "Movie Search":
-    st.title("Movie Search App")
+    st.title("Movie Search")
 
     # Define the search parameters
     search_query = st.text_input("Enter movie title")
@@ -52,3 +54,39 @@ elif option == "Movie Search":
             st.image(f"https://image.tmdb.org/t/p/w500{movie['poster_path']}")
             st.write(f"Rating: {movie['vote_average']}")
             st.write("---")
+
+# Stats
+elif option == "Movie Statistics":
+    st.header("Top Rated Movies of All Time")
+
+    # data table with top rated movies
+    url = f'https://api.themoviedb.org/3/movie/top_rated?api_key={api_key}'
+    response = requests.get(url)
+    top_rated_movies = response.json()['results']
+    df = pd.DataFrame(top_rated_movies)
+    show_columns = ['title', 'overview', 'popularity', 'release_date', 'vote_average', 'vote_count']
+    df = df[show_columns]
+    st.dataframe(df)
+
+    # options to display data
+    st.subheader("Choose a method to display popularity data")
+    display_line_chart = st.checkbox("line chart")
+    display_bar_chart = st.checkbox("bar chart")
+
+    #line chart
+    if display_line_chart:
+        df = pd.DataFrame(top_rated_movies)
+        df['release_date'] = pd.to_datetime(df['release_date'])
+        df.set_index('release_date', inplace=True)
+        chart_data = pd.DataFrame({'Popularity': df['popularity'], 'Release Date': df.index})
+        st.line_chart(chart_data, use_container_width=True, x='Release Date', y='Popularity')
+        st.caption("This chart shows the popularity of top rated movies over time.")
+
+    if display_bar_chart:
+        df = pd.DataFrame(top_rated_movies)
+        df['release_year'] = pd.DatetimeIndex(df['release_date']).year
+        grouped = df.groupby('release_year')['popularity'].mean()
+        chart_data = pd.DataFrame({'Release Year': grouped.index, 'Mean Popularity': grouped.values})
+        chart_data = chart_data.sort_values(by='Release Year')
+        st.bar_chart(chart_data,x='Release Year', y='Mean Popularity', use_container_width=True)
+        st.caption('This chart shows the average popularity of top rated movies by release year.')
