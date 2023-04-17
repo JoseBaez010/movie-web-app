@@ -8,7 +8,7 @@ st.markdown("<h1 style='text-align: center; color: black;'>Cinema Lit</h1>", uns
 
 api_key = "bdb0d72516db605476b9d810383f277e"
 
-option = st.sidebar.selectbox("Here are the other options: ", ("Main Page", "Movie Search", "Movie Statistics"))
+option = st.sidebar.selectbox("Here are the other options: ", ("Main Page", "Movie Search", "Movie Statistics", "Setting"))
 
 # Home Page
 if option == "Main Page":
@@ -48,32 +48,38 @@ elif option == "Movie Search":
                                    movie_genre)]
 
         # Display filtered movie results
-        for movie in filtered_movies:
-            st.write(movie["title"])
-            st.write(movie["overview"])
-            st.image(f"https://image.tmdb.org/t/p/w500{movie['poster_path']}")
-            st.write(f"Rating: {movie['vote_average']}")
-            st.write("---")
+        if filtered_movies:
+            st.success("Movies are found here")
+            for movie in filtered_movies:
+                st.write(movie["title"])
+                st.write(movie["overview"])
+                st.image(f"https://image.tmdb.org/t/p/w500{movie['poster_path']}")
+                st.write(f"Rating: {movie['vote_average']}")
+                st.write("---")
+        else:
+            st.error("Movies are not found here.")
 
 # Stats
 elif option == "Movie Statistics":
     st.header("Top Rated Movies of All Time")
 
-    # data table with top rated movies
+    # Make an API request
     url = f'https://api.themoviedb.org/3/movie/top_rated?api_key={api_key}'
     response = requests.get(url)
+
+    # Data table with Top-rated movies
     top_rated_movies = response.json()['results']
     df = pd.DataFrame(top_rated_movies)
     show_columns = ['title', 'overview', 'popularity', 'release_date', 'vote_average', 'vote_count']
     df = df[show_columns]
     st.dataframe(df)
 
-    # options to display data
+    # Options to display data
     st.subheader("Choose a method to display popularity data")
-    display_line_chart = st.checkbox("line chart")
-    display_bar_chart = st.checkbox("bar chart")
+    display_line_chart = st.checkbox("Line chart")
+    display_bar_chart = st.checkbox("Bar chart")
 
-    #line chart
+    # Code for the LineChart
     if display_line_chart:
         df = pd.DataFrame(top_rated_movies)
         df['release_date'] = pd.to_datetime(df['release_date'])
@@ -82,11 +88,12 @@ elif option == "Movie Statistics":
         st.line_chart(chart_data, use_container_width=True, x='Release Date', y='Popularity')
         st.caption("This chart shows the popularity of top rated movies over time.")
 
+    # Code for the Bar Chart
     if display_bar_chart:
         df = pd.DataFrame(top_rated_movies)
         df['release_year'] = pd.DatetimeIndex(df['release_date']).year
         grouped = df.groupby('release_year')['popularity'].mean()
         chart_data = pd.DataFrame({'Release Year': grouped.index, 'Mean Popularity': grouped.values})
         chart_data = chart_data.sort_values(by='Release Year')
-        st.bar_chart(chart_data,x='Release Year', y='Mean Popularity', use_container_width=True)
+        st.bar_chart(chart_data, x='Release Year', y='Mean Popularity', use_container_width=True)
         st.caption('This chart shows the average popularity of top rated movies by release year.')
