@@ -4,18 +4,37 @@ import pandas as pd
 
 background_color = "linear-gradient(180deg, #6E48AA, #B538FF)"
 
-st.markdown("<h1 style='text-align: center; color: black;'>Cinema Lit</h1>", unsafe_allow_html=True)
-
+st.markdown("<h1 style='text-align: center; color: black;'>Cinema Fanatic</h1>", unsafe_allow_html=True)
+st.divider()
 api_key = "bdb0d72516db605476b9d810383f277e"
 
-option = st.sidebar.selectbox("Here are the other options: ", ("Main Page", "Movie Search", "Movie Statistics", "Setting"))
+option = st.sidebar.selectbox("Explore the web app: ", ("Home", "Search your Favorites", "Top-rated Data"))
 
 # Home Page
-if option == "Main Page":
-    st.title("Home Page")
+if option == "Home":
+    #st.title("Home Page")
+    st.header("Welcome to :blue[Cinema Fanatic], a place where movie enthusiasts get their crave on")
+    st.divider()
+    st.text("Cinema Fanatic aims to provide users access to data related to Top-Rated movies.\nOn top of that, users "
+            "can explore different genres and find any movie \nfrom a certain year!")
+    st.divider()
+    st.text("Try it out!")
+
+    # make api request
+    url = f"https://api.themoviedb.org/3/movie/now_playing?api_key={api_key}&language=en-US&page=1"
+    response = requests.get(url)
+    data = response.json()
+    movies = data["results"]
+
+    #create button to get recently released movies
+    if st.button("Recently Released Movies"):
+        table_data = []
+        for movie in movies:
+            table_data.append([movie["title"], movie["release_date"], movie["vote_average"]])
+        st.table(table_data)
 
 # Search
-elif option == "Movie Search":
+elif option == "Search your Favorites":
     st.title("Movie Search")
 
     # Define the search parameters
@@ -60,7 +79,7 @@ elif option == "Movie Search":
             st.error("Movies are not found here.")
 
 # Stats
-elif option == "Movie Statistics":
+elif option == "Top-rated Data":
     st.header("Top Rated Movies of All Time")
 
     # Make an API request
