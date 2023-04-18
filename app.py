@@ -1,18 +1,20 @@
 import streamlit as st
 import requests
 import pandas as pd
+import json
+import numpy as np
 
 background_color = "linear-gradient(180deg, #6E48AA, #B538FF)"
-
+#5fa1e8 <- nice color to use as a theme
 st.markdown("<h1 style='text-align: center; color: black;'>Cinema Fanatic</h1>", unsafe_allow_html=True)
 st.divider()
 api_key = "bdb0d72516db605476b9d810383f277e"
+geo_api_key = "61603b418c15425bae802fea96528ab3"
 
 option = st.sidebar.selectbox("Explore the web app: ", ("Home", "Search your Favorites", "Top-rated Data"))
 
 # Home Page
 if option == "Home":
-    #st.title("Home Page")
     st.header("Welcome to :blue[Cinema Fanatic], a place where movie enthusiasts get their crave on")
     st.divider()
     st.text("Cinema Fanatic aims to provide users access to data related to Top-Rated movies.\nOn top of that, users "
@@ -32,6 +34,40 @@ if option == "Home":
         for movie in movies:
             table_data.append([movie["title"], movie["release_date"], movie["vote_average"]])
         st.table(table_data)
+
+    st.divider()
+
+    #map for nearest theatres
+    st.title("Find your Nearest Movie Theater")
+    zip_code = st.text_input("Enter your 5-digit zip code:")
+
+    # check valid zipcode
+    if len(zip_code) != 5 or not zip_code.isdigit():
+        st.warning("Please enter a valid 5-digit zip code.")
+    else:
+        # api request for geocoding to get coordinates of zipcode
+        response = requests.get(
+            f"https://api.opencagedata.com/geocode/v1/json?q={zip_code}&key={geo_api_key}")
+        response_json = response.json()
+        lat = response_json['results'][0]['geometry']['lat']
+        lng = response_json['results'][0]['geometry']['lng']
+
+        # api request to get nearest theaters
+        url = f"https://api.themoviedb.org/3/discover/movie?api_key={api_key}&language=en-US&include_adult=false&include_video=false&page=1&release_date.gte=2022-01-01&with_release_type=3&certification_country=US&certification.lte=G&sort_by=popularity.desc&with_watch_providers=8&watch_region=US&with_watch_monetization_types=flatrate&with_genres=35&vote_count.gte=100&vote_average.gte=6&with_runtime.gte=60&with_runtime.lte=180&with_original_language=en&with_companies=1703&with_companies=174&with_companies=31&with_companies=7467&with_companies=4&with_companies=10397&with_companies=56&with_companies=88&with_companies=69&with_companies=2065&with_companies=5&with_companies=11867&with_companies=1158&with_companies=25&with_companies=33&with_companies=28&with_companies=34&with_companies=306&with_companies=3254&with_companies=4&with_companies=11&with_companies=12&with_companies=559&with_companies=8&with_companies={lat},{lng}&radius=10"
+        response = requests.get(url)
+        response_json = response.json()
+
+        # making the st.map
+        theaters = []
+        for result in response_json['results']:
+            theater = {
+                'lat': result['vote_average'],
+                'lon': result['popularity']
+            }
+            theaters.append(theater)
+        theaters_df = pd.DataFrame(theaters)
+        st.map(theaters_df)
+
 
 # Search
 elif option == "Search your Favorites":
@@ -77,6 +113,9 @@ elif option == "Search your Favorites":
                 st.write("---")
         else:
             st.error("Movies are not found here.")
+
+
+
 
 # Stats
 elif option == "Top-rated Data":
