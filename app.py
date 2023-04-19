@@ -11,7 +11,7 @@ st.divider()
 api_key = "bdb0d72516db605476b9d810383f277e"
 places_api_key = "AIzaSyA0Ci-gyYa06Bswegp0Iub5ZiS0iVApK_U"
 
-option = st.sidebar.selectbox("Explore the web app: ", ("Home", "Search your Favorites", "Top-rated Data"))
+option = st.sidebar.selectbox("Explore the web app: ", ("Home", "Search your Favorites", "Top-rated Data", "Feedback"))
 
 # Home Page
 if option == "Home":
@@ -154,3 +154,18 @@ elif option == "Top-rated Data":
         chart_data = chart_data.sort_values(by='Release Year')
         st.bar_chart(chart_data, x='Release Year', y='Mean Popularity', use_container_width=True)
         st.caption('This chart shows the average popularity of top rated movies by release year.')
+
+elif option == "Feedback":
+    st.title("Feedback")
+    Q1 = st.radio(
+        "Would you recommend this web app to someone?",
+        ('Yes', 'No', 'I don\'t know'))
+    Q2 = st.radio(
+        "Did you have a difficult experience navigating the web app?",
+        ('Yes', 'No', 'I don\'t know'))
+    Q3 = st.radio(
+        "How would you rate your satisfaction with the product on a scale of 1 to 5?",
+        ('1','2','3','4','5'))
+    title = st.text_input('What was the most useful part of this app?', 'Type Here')
+    st.button("Submit")
+
