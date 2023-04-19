@@ -9,7 +9,7 @@ background_color = "linear-gradient(180deg, #6E48AA, #B538FF)"
 st.markdown("<h1 style='text-align: center; color: black;'>Cinema Fanatic</h1>", unsafe_allow_html=True)
 st.divider()
 api_key = "bdb0d72516db605476b9d810383f277e"
-geo_api_key = "61603b418c15425bae802fea96528ab3"
+places_api_key = "AIzaSyA0Ci-gyYa06Bswegp0Iub5ZiS0iVApK_U"
 
 option = st.sidebar.selectbox("Explore the web app: ", ("Home", "Search your Favorites", "Top-rated Data"))
 
@@ -22,13 +22,13 @@ if option == "Home":
     st.divider()
     st.text("Try it out!")
 
-    # make api request
+    # Make api request
     url = f"https://api.themoviedb.org/3/movie/now_playing?api_key={api_key}&language=en-US&page=1"
     response = requests.get(url)
     data = response.json()
     movies = data["results"]
 
-    #create button to get recently released movies
+    # Create button to get recently released movies
     if st.button("Recently Released Movies"):
         table_data = []
         for movie in movies:
@@ -37,40 +37,42 @@ if option == "Home":
 
     st.divider()
 
-    #map for nearest theatres
+    # Section for finding the nearest Movie Theater
     st.title("Find your Nearest Movie Theater")
     zip_code = st.text_input("Enter your 5-digit zip code:")
 
-    # check valid zipcode
+    # Check valid zipcode
     if len(zip_code) != 5 or not zip_code.isdigit():
         st.warning("Please enter a valid 5-digit zip code.")
     else:
-        # api request for geocoding to get coordinates of zipcode
-        response = requests.get(
-            f"https://api.opencagedata.com/geocode/v1/json?q={zip_code}&key={geo_api_key}")
+        # Api request for geocoding to get coordinates of zipcode
+        response = requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={zip_code}&key={places_api_key}")
         response_json = response.json()
-        lat = response_json['results'][0]['geometry']['lat']
-        lng = response_json['results'][0]['geometry']['lng']
+        lat = response_json['results'][0]['geometry']['location']['lat']
+        lng = response_json['results'][0]['geometry']['location']['lng']
 
-        # api request to get nearest theaters
-        url = f"https://api.themoviedb.org/3/discover/movie?api_key={api_key}&language=en-US&include_adult=false&include_video=false&page=1&release_date.gte=2022-01-01&with_release_type=3&certification_country=US&certification.lte=G&sort_by=popularity.desc&with_watch_providers=8&watch_region=US&with_watch_monetization_types=flatrate&with_genres=35&vote_count.gte=100&vote_average.gte=6&with_runtime.gte=60&with_runtime.lte=180&with_original_language=en&with_companies=1703&with_companies=174&with_companies=31&with_companies=7467&with_companies=4&with_companies=10397&with_companies=56&with_companies=88&with_companies=69&with_companies=2065&with_companies=5&with_companies=11867&with_companies=1158&with_companies=25&with_companies=33&with_companies=28&with_companies=34&with_companies=306&with_companies=3254&with_companies=4&with_companies=11&with_companies=12&with_companies=559&with_companies=8&with_companies={lat},{lng}&radius=10"
+        # Using this api request to find the nearby theaters
+        radius = 80000  # set radius to 50 miles
+        url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius={radius}&type=movie_theater&key={places_api_key}"
         response = requests.get(url)
         response_json = response.json()
 
-        # making the st.map
+        # Making the map
         theaters = []
         for result in response_json['results']:
             theater = {
-                'lat': result['vote_average'],
-                'lon': result['popularity']
+                'lat': result['geometry']['location']['lat'],
+                'lon': result['geometry']['location']['lng']
             }
             theaters.append(theater)
         theaters_df = pd.DataFrame(theaters)
-        st.map(theaters_df)
-
+        theaters_df['LAT'] = theaters_df['lat']
+        theaters_df['LON'] = theaters_df['lon']
+        st.map(theaters_df[['LAT', 'LON']])
 
 # Search
 elif option == "Search your Favorites":
+     # Make API request
     st.title("Movie Search")
 
     # Define the search parameters
@@ -88,7 +90,8 @@ elif option == "Search your Favorites":
 
         # Filter movies based on release year range
         filtered_movies = [movie for movie in response['results'] if
-                           year_range[0] <= int(movie['release_date'][:4]) <= year_range[1]]
+                           movie['release_date'] and year_range[0] <= int(movie['release_date'].split("-")[0]) <=
+                           year_range[1]]
 
         # Filter movies based on genre(s)
         if movie_genre:
@@ -110,14 +113,10 @@ elif option == "Search your Favorites":
                 st.write(movie["overview"])
                 st.image(f"https://image.tmdb.org/t/p/w500{movie['poster_path']}")
                 st.write(f"Rating: {movie['vote_average']}")
-                st.write("---")
+                st.divider()
         else:
             st.error("Movies are not found here.")
 
-
-
-
-# Stats
 elif option == "Top-rated Data":
     st.header("Top Rated Movies of All Time")
 
