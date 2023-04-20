@@ -11,7 +11,7 @@ st.divider()
 api_key = "bdb0d72516db605476b9d810383f277e"
 places_api_key = "AIzaSyA0Ci-gyYa06Bswegp0Iub5ZiS0iVApK_U"
 
-option = st.sidebar.selectbox("Explore the web app: ", ("Home", "Search your Favorites", "Top-rated Data", "Feedback"))
+option = st.sidebar.selectbox("Explore the web app: ", ("Home", "Search your Favorites", "Movie Data", "Feedback"))
 
 # Home Page
 if option == "Home":
@@ -21,19 +21,6 @@ if option == "Home":
             "can explore different genres and find any movie \nfrom a certain year!")
     st.divider()
     st.text("Try it out!")
-
-    # Make api request
-    url = f"https://api.themoviedb.org/3/movie/now_playing?api_key={api_key}&language=en-US&page=1"
-    response = requests.get(url)
-    data = response.json()
-    movies = data["results"]
-
-    # Create button to get recently released movies
-    if st.button("Recently Released Movies"):
-        table_data = []
-        for movie in movies:
-            table_data.append([movie["title"], movie["release_date"], movie["vote_average"]])
-        st.table(table_data)
 
     st.divider()
 
@@ -117,43 +104,55 @@ elif option == "Search your Favorites":
         else:
             st.error("Movies are not found here.")
 
-elif option == "Top-rated Data":
-    st.header("Top Rated Movies of All Time")
+elif option == "Movie Data":
+    select_data = st.selectbox("Choose which movies to see", ("Recently Released Movies","Top Rated Data"))
+    if select_data == "Top Rated Data":
+        st.header("Top Rated Movies of All Time")
 
-    # Make an API request
-    url = f'https://api.themoviedb.org/3/movie/top_rated?api_key={api_key}'
-    response = requests.get(url)
+        # Make an API request
+        url = f'https://api.themoviedb.org/3/movie/top_rated?api_key={api_key}'
+        response = requests.get(url)
 
-    # Data table with Top-rated movies
-    top_rated_movies = response.json()['results']
-    df = pd.DataFrame(top_rated_movies)
-    show_columns = ['title', 'overview', 'popularity', 'release_date', 'vote_average', 'vote_count']
-    df = df[show_columns]
-    st.dataframe(df)
-
-    # Options to display data
-    st.subheader("Choose a method to display popularity data")
-    display_line_chart = st.checkbox("Line chart")
-    display_bar_chart = st.checkbox("Bar chart")
-
-    # Code for the LineChart
-    if display_line_chart:
+        # Data table with Top-rated movies
+        top_rated_movies = response.json()['results']
         df = pd.DataFrame(top_rated_movies)
-        df['release_date'] = pd.to_datetime(df['release_date'])
-        df.set_index('release_date', inplace=True)
-        chart_data = pd.DataFrame({'Popularity': df['popularity'], 'Release Date': df.index})
-        st.line_chart(chart_data, use_container_width=True, x='Release Date', y='Popularity')
-        st.caption("This chart shows the popularity of top rated movies over time.")
+        show_columns = ['title', 'overview', 'popularity', 'release_date', 'vote_average', 'vote_count']
+        df = df[show_columns]
+        st.dataframe(df)
 
-    # Code for the Bar Chart
-    if display_bar_chart:
-        df = pd.DataFrame(top_rated_movies)
-        df['release_year'] = pd.DatetimeIndex(df['release_date']).year
-        grouped = df.groupby('release_year')['popularity'].mean()
-        chart_data = pd.DataFrame({'Release Year': grouped.index, 'Mean Popularity': grouped.values})
-        chart_data = chart_data.sort_values(by='Release Year')
-        st.bar_chart(chart_data, x='Release Year', y='Mean Popularity', use_container_width=True)
-        st.caption('This chart shows the average popularity of top rated movies by release year.')
+        # Options to display data
+        st.subheader("Choose a method to display popularity data")
+        display_line_chart = st.checkbox("Line chart")
+        display_bar_chart = st.checkbox("Bar chart")
+
+        # Code for the LineChart
+        if display_line_chart:
+            df = pd.DataFrame(top_rated_movies)
+            df['release_date'] = pd.to_datetime(df['release_date'])
+            df.set_index('release_date', inplace=True)
+            chart_data = pd.DataFrame({'Popularity': df['popularity'], 'Release Date': df.index})
+            st.line_chart(chart_data, use_container_width=True, x='Release Date', y='Popularity')
+            st.caption("This chart shows the popularity of top rated movies over time.")
+
+        # Code for the Bar Chart
+        if display_bar_chart:
+            df = pd.DataFrame(top_rated_movies)
+            df['release_year'] = pd.DatetimeIndex(df['release_date']).year
+            grouped = df.groupby('release_year')['popularity'].mean()
+            chart_data = pd.DataFrame({'Release Year': grouped.index, 'Mean Popularity': grouped.values})
+            chart_data = chart_data.sort_values(by='Release Year')
+            st.bar_chart(chart_data, x='Release Year', y='Mean Popularity', use_container_width=True)
+            st.caption('This chart shows the average popularity of top rated movies by release year.')
+
+    elif select_data == "Recently Released Movies":
+        url = f"https://api.themoviedb.org/3/movie/now_playing?api_key={api_key}&language=en-US&page=1"
+        response = requests.get(url)
+        data = response.json()
+        movies = data["results"]
+        table_data = []
+        for movie in movies:
+            table_data.append([movie["title"], movie["release_date"], movie["vote_average"]])
+        st.table(table_data)
 
 elif option == "Feedback":
     st.title("Feedback")
