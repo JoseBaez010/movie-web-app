@@ -1,12 +1,25 @@
 import streamlit as st
 import requests
 import pandas as pd
-import json
-import numpy as np
 
-background_color = "linear-gradient(180deg, #6E48AA, #B538FF)"
-#5fa1e8 <- nice color to use as a theme
-st.markdown("<h1 style='text-align: center; color: black;'>Cinema Fanatic</h1>", unsafe_allow_html=True)
+page_bg_color = """
+<style>
+    [data-testid="stAppViewContainer"] > .main {
+        background-color: #FFFFFF;
+    }
+    [data-testid="stSidebar"] > div:first-child {
+        background-color: #F2F2F2;
+    }
+    [data-testid="stHeader"] {
+        background: #0077C2;
+    }
+    
+ </style>
+"""
+
+st.markdown(page_bg_color, unsafe_allow_html=True)
+
+st.markdown("<h1 style='text-align: center;'>Cinema Fanatic</h1>", unsafe_allow_html=True)
 st.divider()
 api_key = "bdb0d72516db605476b9d810383f277e"
 places_api_key = "AIzaSyA0Ci-gyYa06Bswegp0Iub5ZiS0iVApK_U"
@@ -17,15 +30,12 @@ option = st.sidebar.selectbox("Explore the web app: ", ("Home", "Search your Fav
 if option == "Home":
     st.header("Welcome to :blue[Cinema Fanatic], a place where movie enthusiasts get their crave on")
     st.divider()
-    st.text("Cinema Fanatic aims to provide users access to data related to Top-Rated movies.\nOn top of that, users "
+    st.text("Cinema Fanatic aims to provide users access to data related to movies.\nOn top of that, users "
             "can explore different genres and find any movie \nfrom a certain year!")
-    st.divider()
-    st.text("Try it out!")
-
     st.divider()
 
     # Section for finding the nearest Movie Theater
-    st.title("Find your Nearest Movie Theater")
+    st.header("Find your Nearest Movie Theater")
     zip_code = st.text_input("Enter your 5-digit zip code:")
 
     # Check valid zipcode
@@ -59,8 +69,8 @@ if option == "Home":
 
 # Search
 elif option == "Search your Favorites":
-     # Make API request
-    st.title("Movie Search")
+    # Make API request
+    st.header("Movie Search")
 
     # Define the search parameters
     search_query = st.text_input("Enter movie title")
@@ -83,10 +93,9 @@ elif option == "Search your Favorites":
         # Filter movies based on genre(s)
         if movie_genre:
             genre_id_dict = {"Action": 28, "Adventure": 12, "Animation": 16, "Comedy": 35, "Crime": 80,
-                             "Documentary": 99,
-                             "Drama": 18, "Family": 10751, "Fantasy": 14, "History": 36, "Horror": 27, "Music": 10402,
-                             "Mystery": 9648, "Romance": 10749, "Science Fiction": 878, "TV Movie": 10770,
-                             "Thriller": 53, "War": 10752, "Western": 37}
+                             "Documentary": 99, "Drama": 18, "Family": 10751, "Fantasy": 14, "History": 36,
+                             "Horror": 27, "Music": 10402, "Mystery": 9648, "Romance": 10749, "Science Fiction": 878,
+                             "TV Movie": 10770, "Thriller": 53, "War": 10752, "Western": 37}
 
             filtered_movies = [movie for movie in filtered_movies if
                                any(genre_id == genre_id_dict[genre] for genre_id in movie["genre_ids"] for genre in
@@ -94,7 +103,6 @@ elif option == "Search your Favorites":
 
         # Display filtered movie results
         if filtered_movies:
-            st.success("Movies are found here")
             for movie in filtered_movies:
                 st.write(movie["title"])
                 st.write(movie["overview"])
@@ -102,10 +110,10 @@ elif option == "Search your Favorites":
                 st.write(f"Rating: {movie['vote_average']}")
                 st.divider()
         else:
-            st.error("Movies are not found here.")
+            st.error("Error no movies here.")
 
 elif option == "Movie Data":
-    select_data = st.selectbox("Choose which movies to see", ("Recently Released Movies","Top Rated Data"))
+    select_data = st.selectbox("Choose which movies to see", ("Recently Released Movies", "Top Rated Data"))
     if select_data == "Top Rated Data":
         st.header("Top Rated Movies of All Time")
 
@@ -145,6 +153,7 @@ elif option == "Movie Data":
             st.caption('This chart shows the average popularity of top rated movies by release year.')
 
     elif select_data == "Recently Released Movies":
+        st.header("Recently Released Movies")
         url = f"https://api.themoviedb.org/3/movie/now_playing?api_key={api_key}&language=en-US&page=1"
         response = requests.get(url)
         data = response.json()
@@ -155,16 +164,17 @@ elif option == "Movie Data":
         st.table(table_data)
 
 elif option == "Feedback":
-    st.title("Feedback")
-    Q1 = st.radio(
-        "Would you recommend this web app to someone?",
-        ('Yes', 'No', 'I don\'t know'))
-    Q2 = st.radio(
-        "Did you have a difficult experience navigating the web app?",
-        ('Yes', 'No', 'I don\'t know'))
-    Q3 = st.radio(
-        "How would you rate your satisfaction with the product on a scale of 1 to 5?",
-        ('1','2','3','4','5'))
-    title = st.text_input('What was the most useful part of this app?', 'Type Here')
-    st.button("Submit")
-
+    st.header("Feedback")
+    with st.form("Feedback", clear_on_submit=True):
+        Q1 = st.radio(
+            "Would you recommend this web app to someone?",
+            ('Yes', 'No', 'I don\'t know'))
+        Q2 = st.radio(
+            "Did you have a difficult experience navigating the web app?",
+            ('Yes', 'No', 'I don\'t know'))
+        Q3 = st.radio(
+            "How would you rate your satisfaction with the product on a scale of 1 to 5?",
+            ('1','2','3','4','5'))
+        title = st.text_input('What was the most useful part of this app?')
+        if st.form_submit_button("Submit"):
+            st.success("Thanks for the Feedback!")

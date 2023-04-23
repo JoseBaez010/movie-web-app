@@ -1,2 +1,1 @@
-# movie-web-app
-# using streamlit :)
+# Cinematic Fanatic
